@@ -514,14 +514,13 @@ void CompletionThread::printCompletions(const List<Completions::Candidate> &comp
             rawOut.reserve(16384);
         if (xml) {
             xmlOut.reserve(16384);
-            xmlOut << String::format<128>("<?xml version=\"1.0\" encoding=\"utf-8\"?><completions location=\"%s\"><![CDATA[",
-                                          request->location.toString(Location::AbsolutePath).constData());
         }
         if (elisp) {
             elispOut.reserve(16384);
             elispOut += String::format<256>("(list 'completions (list \"%s\" (list",
                                             RTags::elispEscape(request->location.toString(Location::AbsolutePath)).constData());
         }
+        bool json = true;
         for (const auto &val : completions) {
             if (val.cursorKind >= cursorKindNames.size())
                 cursorKindNames.resize(val.cursorKind + 1);
@@ -536,12 +535,18 @@ void CompletionThread::printCompletions(const List<Completions::Candidate> &comp
                                                        val.annotation.constData(),
                                                        val.parent.constData(),
                                                        val.briefComment.constData());
-                if (raw)
-                    rawOut += str;
-                if (xml)
-                    xmlOut += str;
             }
-            if (elisp) {
+            else if (json) {
+                const String str = String::format<128>(
+                "{\"c\":\"%s\", \"s\":\"%s\", \"k\":\"%s\", \"a\":\"%s\", \"p\":\"%s\", \"comm\":\"%s\"}\n",
+                                              val.completion.constData(),
+                                              val.signature.constData(),
+                                              kind.constData(),
+                                              val.annotation.constData(),
+                                              val.parent.constData(),
+                                              val.briefComment.constData());
+            }
+            else if (elisp) {
                 // elispOut += String::format<128>(" (list \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\")",
                 elispOut += String::format<128>(" (list \"%s\" \"%s\" \"%s\")",
                                                 RTags::elispEscape(val.completion).constData(),
@@ -552,11 +557,12 @@ void CompletionThread::printCompletions(const List<Completions::Candidate> &comp
                 // val.parent.constData(),
                 // val.briefComment.constData());
             }
+            if (raw || xml || json)
+                rawOut += str;
         }
         if (elisp)
             elispOut += ")))";
-        if (xml)
-            xmlOut += "]]></completions>\n";
+        if (xml) {}
 
         EventLoop::mainEventLoop()->callLater([outputs, xmlOut, elispOut, rawOut]() {
                 for (auto &it : outputs) {
