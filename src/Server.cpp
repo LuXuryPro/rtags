@@ -1866,6 +1866,8 @@ void Server::codeCompleteAt(const std::shared_ptr<QueryMessage> &query, const st
         flags |= CompletionThread::Elisp;
     if (query->flags() & QueryMessage::XMLCompletions)
         flags |= CompletionThread::XML;
+    if (query->flags() & QueryMessage::JSONCompletions)
+        flags |= CompletionThread::JSON;
     if (query->flags() & QueryMessage::CodeCompleteIncludeMacros)
         flags |= CompletionThread::CodeCompleteIncludeMacros;
     std::shared_ptr<Connection> c = conn;

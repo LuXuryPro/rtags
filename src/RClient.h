@@ -135,6 +135,7 @@ public:
         Wait,
         WildcardSymbolNames,
         XMLCompletions,
+        JSONCompletions,
         NumOptions
     };
 

@@ -157,6 +157,7 @@ struct Option opts[] = {
     { RClient::SilentQuery, "silent-query", 0, no_argument, "Don't log this request in rdm." },
     { RClient::SynchronousCompletions, "synchronous-completions", 0, no_argument, "Wait for completion results." },
     { RClient::XMLCompletions, "xml-completions", 0, no_argument, "Output completions in XML" },
+    { RClient::JSONCompletions, "json-completions", 0, no_argument, "Output completions in json" },
     { RClient::NoSortReferencesByInput, "no-sort-references-by-input", 0, no_argument, "Don't sort references by input position." },
     { RClient::ProjectRoot, "project-root", 0, required_argument, "Override project root for compile commands." },
     { RClient::RTagsConfig, "rtags-config", 0, required_argument, "Print out .rtags-config for argument." },
@@ -326,6 +327,8 @@ public:
             flags |= RTagsLogOutput::Elisp;
         } else if (rc->queryFlags() & QueryMessage::XMLCompletions) {
             flags |= RTagsLogOutput::XMLCompletions;
+        } else if (rc->queryFlags() & QueryMessage::JSONCompletions) {
+            flags |= RTagsLogOutput::JSONCompletions;
         }
 
         const LogLevel level = mLevel == Default ? rc->logLevel() : mLevel;
@@ -686,6 +689,9 @@ RClient::ParseStatus RClient::parse(int &argc, char **argv)
             break;
         case XMLCompletions:
             mQueryFlags |= QueryMessage::XMLCompletions;
+            break;
+        case JSONCompletions:
+            mQueryFlags |= QueryMessage::JSONCompletions;
             break;
         case FilterSystemHeaders:
             mQueryFlags |= QueryMessage::FilterSystemIncludes;
