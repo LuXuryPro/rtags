@@ -529,8 +529,10 @@ void CompletionThread::printCompletions(const List<Completions::Candidate> &comp
             elispOut += String::format<256>("(list 'completions (list \"%s\" (list",
                                             RTags::elispEscape(request->location.toString(Location::AbsolutePath)).constData());
         }
-        else if (json)
+        else if (json) {
             jsonOut.reserve(16384);
+            jsonOut << "[";
+        }
 
         for (const auto &val : completions) {
             if (val.cursorKind >= cursorKindNames.size())
@@ -549,14 +551,17 @@ void CompletionThread::printCompletions(const List<Completions::Candidate> &comp
                 rawOut += str;
             }
             else if (json) {
+                String comment = String(val.briefComment.constData());
+                comment.replace("\"", "'");
                 const String str = String::format<128>(
-                "{\"c\":\"%s\", \"s\":\"%s\", \"k\":\"%s\", \"a\":\"%s\", \"p\":\"%s\", \"comm\":\"%s\"}\n",
+                "{\"c\":\"%s\", \"s\":\"%s\", \"k\":\"%s\", \"a\":\"%s\", \"p\":\"%s\", \"comm\":\"%s\"},",
                                               val.completion.constData(),
                                               val.signature.constData(),
                                               kind.constData(),
                                               val.annotation.constData(),
                                               val.parent.constData(),
-                                              val.briefComment.constData());
+                                              comment.c_str()
+                                              );
                 jsonOut += str;
             }
             else if (elisp) {
@@ -575,6 +580,10 @@ void CompletionThread::printCompletions(const List<Completions::Candidate> &comp
             elispOut += ")))";
         else if (xml)
             xmlOut += "]]></completions>\n";
+        else if (json) {
+            /* remove last "," (comma symbol) and replace it with ]*/
+            jsonOut.replace(jsonOut.size() - 1, 1, "]");
+        }
 
         EventLoop::mainEventLoop()->callLater([outputs, xmlOut, elispOut, rawOut, jsonOut]() {
                 for (auto &it : outputs) {
